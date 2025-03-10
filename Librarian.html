@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Librarian Page</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+
+<body>
+    <div id="overlay"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="script.js" defer></script>
+    <button class="librarian_button">Librarian</button>
+
+<!-- Login Modal -->
+<div id="login-modal" style="display: none;">
+    <h2>Librarian Login</h2>
+    <form id="login-form">
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+</div>
+
+<!-- Library Selection (After Login) -->
+<div id="library-selection" style="display: none;">
+    <h2>Select Library</h2>
+    <select id="library-dropdown"></select>
+    <button id="select-library-btn">Go</button>
+</div>
+</body>
+
+</html>

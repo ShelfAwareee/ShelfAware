@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div id="overlay"></div>
+
+    <div class="header-container">
+        <img src="elements/header.png" alt="header" class="header">
+    </div>
+    
+    <div id="library-container">
+        <h1 id="library-name">Library</h1>
+        <img src="elements/backbutton.jpg" alt="backbutton" class="backbutton">
+        <input type="text" id="search-bar" placeholder="Search for a book..." onkeyup="searchBooks()">
+
+        <select id="categoryFilter">
+            <option value="all">All Categories</option>
+        </select>
+        <button onclick="filterBooksByCategory()">Sort</button>
+        
+<!-- Manage Library Modal -->
+<div id="manage-library-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>SCAN YOUR BOOK!</h2>
+        <input type="text" id="isbn-input" placeholder="Enter ISBN: ">
+        <button onclick="manageBook()">Submit</button>
+    </div>
+</div>
+
+<!-- Book Exists Modal -->
+<div id="book-exists-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Book Found</h2>
+        <p id="book-info"></p> <!-- Ensure this matches the JavaScript ID -->
+        <button id="borrow-btn">Borrow</button>
+        <button id="return-btn">Return</button>
+    </div>
+</div>
+
+
+
+<!-- New Book Modal -->
+<div id="new-book-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h2>Add New Book</h2>
+        <input type="text" id="new-title" placeholder="Title">
+        <input type="text" id="new-author" placeholder="Author">
+        <input type="text" id="new-category" placeholder="Category">
+        <button onclick="addNewBook()">Add Book</button>
+    </div>
+</div>
+
+<button id="manage-library-btn">Manage Library</button>
+
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Availability</th>
+            <th>Borrowed By</th> <!-- NEW COLUMN -->
+        </tr>
+    </thead>
+    <tbody id="books-list">
+        <!-- Books will be dynamically inserted here -->
+    </tbody>
+</table>
+
+        
+    </div>
+
+    <!-- Book Action Modal (Displays Title & Action Message) -->
+<div id="book-action-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('book-action-modal')">&times;</span>
+        <h2 id="book-title"></h2>
+        <p id="action-text"></p>
+    </div>
+</div>
+
+<!-- Student ID Modal -->
+<div id="student-id-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('student-id-modal')">&times;</span>
+        <h2 id="student-book-title"></h2>
+        <p id="student-action-text"></p>
+        <input type="text" id="student-id-input" placeholder="Enter Student ID">
+        <button id="confirm-action-btn">Confirm</button>
+    </div>
+</div>
+
+
+
+</body>
+</html>

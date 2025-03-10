@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library</title>
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("📌 DOM fully loaded, calling fetchBooksForStudents()...");
+        fetchBooksForStudents();
+    });
+</script>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="script.js" defer></script>
+    <div class="header-container">
+        <img src="elements/header.png" alt="header" class="header">
+    </div>
+    
+    <div id="library-container">
+    <h1 id="library-name">Library</h1>
+    <img src="elements/backbutton.jpg" alt="backbutton" class="backbutton">
+    <input type="text" id="search-bar" placeholder="Search for a book..." onkeyup="searchBooks()">
+
+    <select id="categoryFilter">
+        <option value="all">All Categories</option>
+    </select>
+    
+
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th> <!-- Added Category Column -->
+            <th>Availability</th>
+        </tr>
+    </thead>
+    <tbody id="student-books-list">
+        <!-- Books will be dynamically inserted here -->
+    </tbody>
+</table>
+</div>
+</body>
+</html>
