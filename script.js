@@ -1057,6 +1057,97 @@ window.onload = function() {
 
 document.addEventListener("DOMContentLoaded", fetchBooksForStudents);
 
+async function fetchBooksForStudents() {
+    console.log("📌 fetchBooksForStudents() started...");
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const libraryId = urlParams.get("id");
+
+    if (!libraryId) {
+        console.error("❌ Library ID is missing in URL.");
+        return;
+    }
+
+    console.log("📌 Library ID from URL:", libraryId);
+
+    const { data, error } = await supabase
+        .from("books")
+        .select("title, author, category, availability")
+        .eq("library", libraryId)
+        .order("title", { ascending: true });
+
+    if (error) {
+        console.error("❌ Error fetching books:", error);
+        return;
+    }
+
+    console.log("📚 Books fetched from Supabase:", data);
+
+    const booksList = document.getElementById("student-books-list");
+    const categoryFilter = document.getElementById("categoryFilter");
+
+    if (!booksList || !categoryFilter) {
+        console.error("❌ Table body or category filter not found! Check your HTML.");
+        return;
+    }
+
+    booksList.innerHTML = "";
+    const categories = new Set();
+
+    data.forEach(book => {
+        categories.add(book.category);
+    
+        const row = document.createElement("tr");
+        row.classList.add("book-row");
+        row.dataset.category = book.category || "Unknown"; // ✅ Fix: Ensures dataset.category is set properly
+    
+        const titleCell = document.createElement("td");
+        titleCell.textContent = book.title;
+        row.appendChild(titleCell);
+    
+        const authorCell = document.createElement("td");
+        authorCell.textContent = book.author || "Unknown";
+        row.appendChild(authorCell);
+    
+        const categoryCell = document.createElement("td");
+        categoryCell.textContent = book.category || "Unknown";
+        row.appendChild(categoryCell);
+    
+        const availabilityCell = document.createElement("td");
+        availabilityCell.textContent = book.availability ? "AVAILABLE" : "BORROWED";
+        availabilityCell.style.color = book.availability ? "green" : "red";
+        row.appendChild(availabilityCell);
+    
+        booksList.appendChild(row);
+    });
+
+    // ✅ Populate category filter dropdown
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>';
+    categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+
+    // ✅ Fix: Ensure filtering is set up after categories are populated
+    categoryFilter.addEventListener("change", () => {
+        const selectedCategory = categoryFilter.value;
+        console.log(`📌 Selected category: ${selectedCategory}`);
+
+        document.querySelectorAll(".book-row").forEach(row => {
+            const bookCategory = row.dataset.category;
+            row.style.display =
+                selectedCategory === "all" || bookCategory === selectedCategory
+                    ? "table-row"
+                    : "none";
+        });
+    });
+
+    console.log("✅ Books displayed and categories loaded!");
+}
+
+
 async function fetchBooks() {
     console.log("📌 fetchBooks() started...");
 
