@@ -18,7 +18,7 @@
     
     <div id="library-container">
         <h1 id="library-name">Library</h1>
-        <img src="elements/backbutton.jpg" alt="backbutton" class="backbutton">
+        <img src="elements/backbutton.png" alt="backbutton" class="backbutton">
         <input type="text" id="search-bar" placeholder="Search for a book..." onkeyup="searchBooks()">
 
         <select id="categoryFilter">
@@ -56,7 +56,9 @@
         <h2>Add New Book</h2>
         <input type="text" id="new-title" placeholder="Title">
         <input type="text" id="new-author" placeholder="Author">
-        <input type="text" id="new-category" placeholder="Category">
+        <select id="new-category">
+            <option value="" disabled selected>Select a category</option>
+        </select>
         <button onclick="addNewBook()">Add Book</button>
     </div>
 </div>

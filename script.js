@@ -143,17 +143,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function searchBooks() {
     const searchQuery = document.getElementById("search-bar").value.toLowerCase();
-    const rows = document.querySelectorAll("#student-books-list tr");
+
+    // Try to get either table
+    const table = document.getElementById("student-books-list") || document.getElementById("books-list");
+
+    if (!table) {
+        console.warn("⚠️ No book list table found!");
+        return;
+    }
+
+    const rows = table.querySelectorAll("tbody tr");
+
+    console.log(`📋 Table found: ${table.id}, Rows: ${rows.length}`);
 
     rows.forEach(row => {
-        const title = row.children[0].textContent.toLowerCase();
-        const author = row.children[1].textContent.toLowerCase();
+        const title = row.children[0]?.textContent.toLowerCase();
+        const author = row.children[1]?.textContent.toLowerCase();
+
+        console.log(`🔎 Checking row: Title="${title}", Author="${author}"`);
 
         row.style.display = (title.includes(searchQuery) || author.includes(searchQuery)) ? "" : "none";
     });
 
     console.log(`🔍 Searching for books: "${searchQuery}"`);
 }
+
 
 
 
@@ -595,6 +609,110 @@ document.addEventListener("DOMContentLoaded", () => {
     setupManageLibraryButton();
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    let addBookBtn = document.getElementById("add-book-btn");
+
+    if (addBookBtn) {
+        addBookBtn.onclick = async function () {
+            await addNewBook();
+        };
+    } else {
+        console.error("❌ ERROR: #add-book-btn not found in DOM.");
+    }
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    let categorySelect = document.getElementById("new-category");
+
+    if (categorySelect) {
+        let categories = ["ACADEMIC BOOK", "REFERENCE BOOK", "FICTION", "NON-FICTION"];
+        categories.forEach(category => {
+            let option = document.createElement("option");
+            option.value = category;
+            option.textContent = category;
+            categorySelect.appendChild(option);
+        });
+    }
+});
+
+
+async function addNewBook() {
+    let title = document.getElementById("new-title").value.trim();
+    let author = document.getElementById("new-author").value.trim();
+    let category = document.getElementById("new-category").value;
+
+    // ✅ Get ISBN from modal
+    let newBookModal = document.getElementById("new-book-modal");
+    let isbn = newBookModal.getAttribute("data-isbn");
+
+    // ✅ Get library_id from URL
+    let urlParams = new URLSearchParams(window.location.search);
+    let libraryId = urlParams.get("id");
+
+    if (!title || !author || !category || !isbn || !libraryId) {
+        alert("All fields are required.");
+        console.error("❌ ERROR: Missing input values.", { title, author, category, isbn, libraryId });
+        return;
+    }
+
+    console.log("📚 Adding new book to database...", { isbn, title, author, category, libraryId });
+
+    const { data, error } = await supabase
+        .from("books")
+        .insert([{ id: isbn, title, author, category, library: libraryId, availability: true }]);
+
+    if (error) {
+        console.error("❌ ERROR: Failed to add book:", error);
+        alert("Failed to add book. " + error.message);
+    } else {
+        console.log(`✅ Book "${title}" added successfully to library ${libraryId}.`);
+        alert(`Book "${title}" added successfully.`);
+        closeModal("new-book-modal");
+    }
+}
+
+
+
+
+
+function loadCategories() {
+    let categoryDropdown = document.getElementById("new-category");
+
+    if (!categoryDropdown) {
+        console.error("❌ ERROR: Category dropdown not found.");
+        return;
+    }
+
+    console.log("📂 Loading predefined book categories...");
+
+    // ✅ Predefined category list
+    const categories = [
+        "ACADEMIC BOOK",
+        "REFERENCE BOOK",
+        "OTHER",
+        "FICTION",
+        "NON-FICTION",
+        "BOARD GAME",
+        "RESEARCH PAPER"
+    ];
+
+    // ✅ Clear previous options & add a default one
+    categoryDropdown.innerHTML = '<option value="">Select a Category</option>';
+
+    // ✅ Populate the dropdown with predefined categories
+    categories.forEach(category => {
+        let option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        categoryDropdown.appendChild(option);
+    });
+
+    console.log("✅ Categories loaded:", categories);
+}
+
+// ✅ Call the function when the page loads
+document.addEventListener("DOMContentLoaded", loadCategories);
+
 async function fetchLibraryName() {
     let username = localStorage.getItem("librarian_username"); // Check localStorage first
 
@@ -798,7 +916,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 async function manageBook() {
     let isbn = document.getElementById("isbn-input").value.trim();
-    console.log(`🔍 Searching for ISBN: "${isbn}"`);  // Debug log
+    console.log(`🔍 Searching for ISBN: "${isbn}"`);  
 
     if (!isbn) {
         alert("Please enter an ISBN.");
@@ -808,15 +926,20 @@ async function manageBook() {
     // Fetch book details from Supabase
     const { data: book, error } = await supabase
         .from("books")
-        .select("id, uuid, title, availability")  // ✅ Fetch id (ISBN)
+        .select("id, title, availability")
         .eq("id", isbn)
         .maybeSingle();
 
-    console.log("📖 Book data from DB:", book);  // Debug log
+    console.log("📖 Book data from DB:", book);  
 
     if (error || !book) {
-        console.error("❌ ERROR: Book not found or fetch error:", error);
-        document.getElementById("new-book-modal").style.display = "block";
+        console.warn("⚠️ No book found for ISBN:", isbn);
+
+        // ✅ Store ISBN in the new book modal
+        let newBookModal = document.getElementById("new-book-modal");
+        newBookModal.setAttribute("data-isbn", isbn);
+        newBookModal.style.display = "block";
+
         return;
     }
 
@@ -832,7 +955,7 @@ async function manageBook() {
 
     bookTitleElement.textContent = `Title: "${book.title}"`;
 
-    // ✅ Borrowing: Ask for student ID
+    // ✅ Borrowing
     if (book.availability) {
         actionTextElement.textContent = `This book is available. Enter student ID to borrow.`;
         studentModal.style.display = "block";
@@ -844,17 +967,19 @@ async function manageBook() {
                 return;
             }
 
-            console.log(`📚 Confirming action: borrow for ISBN: ${book.id}`);
+            console.log(`📚 Borrowing book with ISBN: ${book.id}`);
             await borrowBook(book.id, studentId);
             closeModal("student-id-modal");
         };
     }
-    // ✅ Returning: Just update availability, no student ID needed
+    // ✅ Returning
     else {
-        console.log(`📚 Confirming action: return for ISBN: ${book.id}`);
+        console.log(`📚 Returning book with ISBN: ${book.id}`);
         await returnBook(book.id);  
     }
 }
+
+
 
 // 🔄 Return book function (just updates availability)
 async function returnBook(isbn) {
@@ -863,7 +988,7 @@ async function returnBook(isbn) {
     // Step 1: Fetch the book UUID
     const { data: bookData, error: bookError } = await supabase
         .from("books")
-        .select("uuid")
+        .select("uuid, availability")
         .eq("id", isbn)
         .single();
 
@@ -874,21 +999,61 @@ async function returnBook(isbn) {
     }
 
     const bookUuid = bookData.uuid;
+
+    if (bookData.availability) {
+        alert("⚠️ Book is already available. No need to return.");
+        return;
+    }
+
     console.log(`🔄 Book UUID found: ${bookUuid}`);
 
-    // Step 2: Update availability in the books table
+    // Step 2: Fetch the library_content record
+    const { data: borrowedRecord, error: borrowedError } = await supabase
+        .from("library_content")
+        .select("id, book_uuid")
+        .eq("book_uuid", bookUuid)
+        .maybeSingle(); // Ensures we don’t break if multiple records exist
+
+    if (borrowedError) {
+        console.error("❌ Supabase Query Error:", borrowedError);
+        alert("Error fetching borrowed book record. Check console for details.");
+        return;
+    }
+
+    console.log("📊 Borrowed Record Found:", borrowedRecord);
+
+    if (!borrowedRecord) {
+        alert("⚠️ No borrowed record found for this book.");
+        return;
+    }
+
+    // Step 3: Delete the library_content row
+    console.log(`🗑️ Attempting to delete library_content row with ID: ${borrowedRecord.id}`);
+
+    const { error: deleteError } = await supabase
+        .from("library_content")
+        .delete()
+        .eq("id", borrowedRecord.id);
+
+    if (deleteError) {
+        console.error("❌ Error deleting borrowed record:", deleteError);
+        alert("Failed to return the book. Possible RLS issue.");
+        return;
+    }
+
+    console.log("✅ Borrowed record deleted. Book successfully returned!");
+
+    // Step 4: Update book availability
     const { error: updateError } = await supabase
         .from("books")
-        .update({ availability: true }) // Mark the book as available
+        .update({ availability: true }) // Mark book as available
         .eq("uuid", bookUuid);
 
     if (updateError) {
         console.error("❌ Error updating book availability:", updateError);
-        alert("Failed to return the book.");
+        alert("Failed to mark the book as available.");
     } else {
-        console.log("✅ Book successfully returned!");
-        
-        // ✅ Show a confirmation message
+        console.log("✅ Book successfully marked as available!");
         alert("Book successfully returned!");
     }
 
@@ -901,11 +1066,16 @@ async function returnBook(isbn) {
 
 
 
+
+
+
+
+
 // Ensure borrowBook and returnBook use the passed student ID without prompting again
 async function borrowBook(isbn, studentId) {
     console.log(`📌 Borrowing book: ${isbn} for student ID: ${studentId}`);
 
-    // Step 1: Fetch the book details (UUID and title)
+    // Step 1: Fetch the book details
     const { data: bookData, error: bookError } = await supabase
         .from("books")
         .select("uuid, title, availability")
@@ -937,8 +1107,6 @@ async function borrowBook(isbn, studentId) {
 
     if (studentError || !studentData) {
         console.warn("⚠️ Student not found in the database. Asking for name...");
-        
-        // 🔴 Prompt for student's name if not found
         const studentName = prompt("⚠️ Student not found! Please enter the student's name:");
 
         if (!studentName) {
@@ -948,7 +1116,6 @@ async function borrowBook(isbn, studentId) {
 
         console.log(`👤 New student: ${studentName}`);
 
-        // ✅ Add student to database
         const { error: insertError } = await supabase
             .from("students")
             .insert([{ id: studentId, name: studentName }]);
@@ -960,15 +1127,33 @@ async function borrowBook(isbn, studentId) {
         }
 
         console.log(`✅ Student "${studentName}" added successfully!`);
-
-        // ✅ Now use the newly added student
         studentData = { name: studentName };
     }
 
     const studentName = studentData.name;
     console.log(`👤 Student confirmed: ${studentName}`);
 
-    // Step 3: Update availability and assign book to student
+    // Step 3: Insert into `library_content` (track borrowing)
+    const { error: insertBorrowError } = await supabase
+        .from("library_content")
+        .insert([
+            {
+                book_id: isbn,
+                book_uuid: bookUuid,
+                student_id: studentId,
+                borrowed_at: new Date().toISOString(),
+            },
+        ]);
+
+    if (insertBorrowError) {
+        console.error("❌ Error inserting into library_content:", insertBorrowError);
+        alert("Failed to record borrowing.");
+        return;
+    }
+
+    console.log(`📜 Borrowing record inserted into library_content.`);
+
+    // Step 4: Update books table availability
     const { error: updateError } = await supabase
         .from("books")
         .update({ availability: false }) // Mark book as borrowed
@@ -976,16 +1161,16 @@ async function borrowBook(isbn, studentId) {
 
     if (updateError) {
         console.error("❌ Error updating book availability:", updateError);
-        alert("Failed to borrow the book.");
+        alert("Failed to update book status.");
     } else {
         console.log(`✅ Book "${bookTitle}" successfully borrowed by ${studentName}!`);
-        
-        // ✅ Show a confirmation message
         alert(`✅ Book "${bookTitle}" has been successfully borrowed by ${studentName}!`);
     }
 
     document.getElementById("isbn-input").value = "";
 }
+
+
 
 
 
