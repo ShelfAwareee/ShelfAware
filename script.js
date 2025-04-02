@@ -1423,7 +1423,7 @@ async function fetchBooks() {
 // ✅ Helper function to format timestamp
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
-    return date.toISOString().replace("T", " ").slice(0, 16); // YYYY-MM-DD HH:MM
+    return date.toISOString().split("T")[0]; // Extracts YYYY-MM-DD
 }
 
 
