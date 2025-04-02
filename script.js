@@ -1348,7 +1348,7 @@ async function fetchBooks() {
 
     const { data, error } = await supabase
         .from("books")
-        .select("title, author, category, availability, library_content(student_id, students(name))")
+        .select("title, author, category, availability, library_content(student_id, students(name), borrowed_at)")
         .eq("library", libraryId)
         .order("title", { ascending: true });
 
@@ -1395,9 +1395,12 @@ async function fetchBooks() {
         availabilityCell.style.color = book.availability ? "green" : "red";
         row.appendChild(availabilityCell);
 
+        // Borrower and timestamp cell
         const borrowerCell = document.createElement("td");
         if (!book.availability && book.library_content && book.library_content.length > 0) {
-            borrowerCell.textContent = book.library_content[0].students ? book.library_content[0].students.name : "Unknown";
+            const borrower = book.library_content[0].students ? book.library_content[0].students.name : "Unknown";
+            const borrowedAt = book.library_content[0].borrowed_at ? formatTimestamp(book.library_content[0].borrowed_at) : "Unknown Time";
+            borrowerCell.textContent = `${borrower} (${borrowedAt})`;
         } else {
             borrowerCell.textContent = "-";
         }
@@ -1416,6 +1419,13 @@ async function fetchBooks() {
 
     console.log("✅ Books displayed and categories loaded!");
 }
+
+// ✅ Helper function to format timestamp
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toISOString().replace("T", " ").slice(0, 16); // YYYY-MM-DD HH:MM
+}
+
 
 // ✅ Attach event listener for category filtering
 document.addEventListener("DOMContentLoaded", () => {
